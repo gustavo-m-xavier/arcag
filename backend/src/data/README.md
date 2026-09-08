@@ -27,6 +27,6 @@ data/
 ├── raw/
 │   └── Original dataset files
 │
-└── processed/
-    └── Generated files after data treatment
+└── preprocess/
+    └── Python files that treat the data for use the dataset
 ```
