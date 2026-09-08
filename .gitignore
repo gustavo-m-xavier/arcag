@@ -6,11 +6,11 @@ env/
 
 .ipynb_checkpoints/
 
-backend/data/raw/*
-!backend/data/raw/.gitkeep
+backend/src/data/raw/*
+!backend/src/data/raw/.gitkeep
 
-backend/data/processed/*
-!backend/data/processed/.gitkeep
+backend/src/data/processed/*
+!backend/src/data/processed/.gitkeep
 
 .DS_Store
 Thumbs.db
