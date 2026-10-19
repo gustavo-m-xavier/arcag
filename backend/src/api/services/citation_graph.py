@@ -1,10 +1,11 @@
-import csv
 import re
 from pathlib import Path
-from typing import Iterator, TypedDict
+from typing import TypedDict
+
+from ..parsers.csv_parser import normalize_network_id, parse_citations, parse_papers
 
 
-DEFAULT_DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "processed"
+DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "processed"
 ABSTRACT_EXCERPT_LENGTH = 500
 _TOKEN_PATTERN = re.compile(r"[\w]+(?:[-'][\w]+)*", re.UNICODE)
 
@@ -35,35 +36,8 @@ class GraphNode(TypedDict):
     is_match: bool
 
 
-class GraphEdge(TypedDict):
-    source: str
-    target: str
-
-
-def normalize_network_id(value: str) -> str:
-    value = value.strip()
-    return value.zfill(7) if value.isdigit() else value
-
-
-def _read_csv(
-    path: Path,
-    required_columns: set[str],
-) -> Iterator[dict[str, str]]:
-    if not path.is_file():
-        raise FileNotFoundError(f"Required processed data file was not found: {path}")
-
-    with path.open(encoding="utf-8", newline="") as csv_file:
-        reader = csv.DictReader(csv_file)
-        missing_columns = required_columns - set(reader.fieldnames or ())
-        if missing_columns:
-            raise ValueError(
-                f"{path} is missing required columns: {', '.join(sorted(missing_columns))}"
-            )
-        yield from reader
-
-
-class CitationGraph:
-    """In-memory search index and citation graph loaded from processed CSV files."""
+class CitationGraphService:
+    """Search paper metadata and construct bounded citation graph results."""
 
     _SEARCH_FIELDS = (
         ("title", 6),
@@ -75,29 +49,17 @@ class CitationGraph:
     )
 
     def __init__(self, data_dir: Path = DEFAULT_DATA_DIR) -> None:
-        paper_rows = _read_csv(
-            data_dir / "papers.csv",
-            {
-                "paper_id",
-                "network_id",
-                "title",
-                "authors",
-                "subjects",
-                "journal_ref",
-                "abstract",
-                "comments",
-                "citations_received",
-                "citations_made",
-            },
-        )
         self.papers: dict[str, Paper] = {}
         self.search_documents: dict[str, dict[str, str]] = {}
-        for row in paper_rows:
+
+        for row in parse_papers(data_dir):
             network_id = normalize_network_id(row["network_id"])
             if not network_id:
                 raise ValueError("papers.csv contains an empty network_id")
             if network_id in self.papers:
-                raise ValueError(f"papers.csv contains duplicate network_id: {network_id}")
+                raise ValueError(
+                    f"papers.csv contains duplicate network_id: {network_id}"
+                )
 
             paper: Paper = {
                 "paper_id": row["paper_id"].strip(),
@@ -123,10 +85,7 @@ class CitationGraph:
 
         self.outgoing: dict[str, set[str]] = {}
         self.incoming: dict[str, set[str]] = {}
-        for row in _read_csv(
-            data_dir / "citations.csv",
-            {"citing_paper", "cited_paper"},
-        ):
+        for row in parse_citations(data_dir):
             source = normalize_network_id(row["citing_paper"])
             target = normalize_network_id(row["cited_paper"])
             if not source or not target:

@@ -72,7 +72,15 @@ while making the missing metadata explicit.
 
 ## Implementation
 
-The API and CSV-backed search/graph logic live in `backend/src/api/`. The
-service loads and indexes CSVs once per process. Tests for search ranking,
-citation direction, unknown metadata nodes, graph limits, and the HTTP
-response are in `backend/tests/test_graph_api.py`.
+The API is divided by responsibility under `backend/src/api/`:
+
+- `main.py` creates the application and registers routers.
+- `routes/` contains HTTP endpoint definitions and request handling.
+- `schemas/` contains response models.
+- `parsers/` reads and validates the processed CSV formats.
+- `services/` implements search ranking and citation graph construction.
+- `dependencies.py` provides the cached graph service to routes.
+
+The service loads and indexes CSV data once per process. Tests for search
+ranking, citation direction, unknown metadata nodes, graph limits, and the
+HTTP response are in `backend/tests/test_graph_api.py`.

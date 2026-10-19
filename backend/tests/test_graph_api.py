@@ -5,8 +5,9 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from backend.src.api.graph import CitationGraph
-from backend.src.api.main import app, get_graph
+from backend.src.api.main import app
+from backend.src.api.routes.graph import get_citation_graph
+from backend.src.api.services.citation_graph import CitationGraphService
 
 
 class CitationGraphTests(unittest.TestCase):
@@ -62,7 +63,7 @@ class CitationGraphTests(unittest.TestCase):
                 {"citing_paper": "1001", "cited_paper": "9201001"},
             ],
         )
-        self.graph = CitationGraph(data_dir)
+        self.graph = CitationGraphService(data_dir)
 
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
@@ -109,7 +110,7 @@ class CitationGraphTests(unittest.TestCase):
         self.assertEqual(result["nodes"], [])
 
     def test_api_returns_graph_response(self) -> None:
-        app.dependency_overrides[get_graph] = lambda: self.graph
+        app.dependency_overrides[get_citation_graph] = lambda: self.graph
         try:
             response = TestClient(app).get(
                 "/api/v1/graph",
