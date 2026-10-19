@@ -24,11 +24,14 @@ The data processing pipeline will consist of the following stages:
 4. Data normalization
 5. Relationship extraction
 6. Data validation
-7. Generation of processed data
+7. Generation of processed data in `backend/src/data/processed/`
 
 ## Documentation
 
 The exploratory analysis and implementation of the data treatment
 are documented in:
 
-`notebooks/01-data-exploration-and-treatment.ipynb`
+`backend/src/notebooks/01-data-exploration-and-treatment.ipynb`
+
+The generated `papers.csv` and `citations.csv` files are consumed by the
+[Citation Graph API](./citation-graph-api.md).
